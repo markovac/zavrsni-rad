@@ -1,14 +1,14 @@
 # zavrsni-rad
 
-###Repozitorij napravljen s ciljem lakšeg prijenosa datoteka vezanih uz završni rad.
+### Repozitorij napravljen s ciljem lakšeg prijenosa datoteka vezanih uz završni rad.
 
-##Naziv teme	
+## Naziv teme	
   Prilagodba testnih konfiguracija paketa strongSwan za rad u sustavu *IMUNES*
 
-##Naziv teme (engleski)
+## Naziv teme (engleski)
   Customization of strongSwan testing configurations for the *IMUNES* system
 
-##Opis teme	
+## Opis teme	
   Protokol IPsec standardno je podržan u svim današnjim implementacijama protokola IPv4 i IPv6. 
   Sigurnosne poveznice, SA (engl. Security Association) moguće je definirati ručno, na svakoj 
   strani veze ili je potrebno koristiti neki od protokola za upravljanje ključevima. 
