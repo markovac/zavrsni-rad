@@ -1,0 +1,52 @@
+Guest kernel : 
+strongSwan   : 5.7.2
+Date         : 20190516-2126-48
+
+[....]  1 host2host-ah: pre..ipsec start
+ipsec start
+expect-connection host-host
+50
+expect-connection host-host
+50
+ipsec up host-host
+initiating IKE_SA host-host[1] to 192.168.0.2
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.168.0.1[500] to 192.168.0.2[500] (1156 bytes)
+received packet: from 192.168.0.2[500] to 192.168.0.1[500] (617 bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) CERTREQ N(FRAG_SUP) N(HASH_ALG) N(MULT_AUTH) ]
+received cert request for "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+sending cert request for "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+authentication of 'moon.strongswan.org' (myself) with RSA_EMSA_PKCS1_SHA2_256 successful
+sending end entity cert "C=CH, O=Linux strongSwan, CN=moon.strongswan.org"
+establishing CHILD_SA host-host
+generating IKE_AUTH request 1 [ IDi CERT N(INIT_CONTACT) CERTREQ IDr AUTH N(USE_TRANSP) N(ESP_TFC_PAD_N) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_6_ADDR) N(ADD_6_ADDR) N(EAP_ONLY) ]
+splitting IKE message with length of 1744 bytes into 2 fragments
+generating IKE_AUTH request 1 [ EF(1/2) ]
+generating IKE_AUTH request 1 [ EF(2/2) ]
+sending packet: from 192.168.0.1[4500] to 192.168.0.2[4500] (1236 bytes)
+sending packet: from 192.168.0.1[4500] to 192.168.0.2[4500] (580 bytes)
+received packet: from 192.168.0.2[4500] to 192.168.0.1[4500] (1236 bytes)
+parsed IKE_AUTH response 1 [ EF(1/2) ]
+received fragment #1 of 2, waiting for complete IKE message
+received packet: from 192.168.0.2[4500] to 192.168.0.1[4500] (372 bytes)
+parsed IKE_AUTH response 1 [ EF(2/2) ]
+received fragment #2 of 2, reassembling fragmented IKE message
+parsed IKE_AUTH response 1 [ IDr CERT AUTH N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_6_ADDR) N(ADD_6_ADDR) N(NO_PROP) ]
+received end entity cert "C=CH, O=Linux strongSwan, CN=sun.strongswan.org"
+  using certificate "C=CH, O=Linux strongSwan, CN=sun.strongswan.org"
+  using trusted ca certificate "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+checking certificate status of "C=CH, O=Linux strongSwan, CN=sun.strongswan.org"
+  fetching crl from 'http://crl.strongswan.org/strongswan.crl' ...
+unable to fetch from http://crl.strongswan.org/strongswan.crl, no capable fetcher found
+crl fetching failed
+certificate status is not available
+  reached self-signed root ca with a path length of 0
+authentication of 'sun.strongswan.org' with RSA_EMSA_PKCS1_SHA2_256 successful
+IKE_SA host-host[1] established between 192.168.0.1[moon.strongswan.org]...192.168.0.2[sun.strongswan.org]
+scheduling reauthentication in 10069s
+maximum IKE_SA lifetime 10609s
+received NO_PROPOSAL_CHOSEN notify, no CHILD_SA built
+failed to establish CHILD_SA, keeping IKE_SA
+received AUTH_LIFETIME of 9977s, scheduling reauthentication in 9437s
+peer supports MOBIKE
+establishing connection 'host-host' failed

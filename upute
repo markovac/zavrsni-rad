@@ -1,0 +1,9 @@
+# Upute
+
+Trenutno stanje rada:
+	-> testiranje se izvodi pokretanjem samo do-tests skripte
+	-> nakon prijenosa datoteka i pokretanja ipseca na čvorovima javlja se crl problem ( ispis je vidljiv i bez 
+pokretanja u myLog datoteci )
+	-> uspostava se ipsec veze pobrka jer se ne obavi posttest čišcenje pa je potrebno IMUNES restart čvorova 
+obaviti
+	-> skripta clean.sh brise stvoreni build direktorij
