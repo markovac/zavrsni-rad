@@ -197,7 +197,7 @@ function searchandreplace {
 
     for eachfoundfile in `find $DESTDIR -type f`
     do
-        sed -i -e "s/$SEARCHSTRING/$REPLACESTRING/g" "$eachfoundfile"
+        sed -i '' -e "s/$SEARCHSTRING/$REPLACESTRING/g" "$eachfoundfile"
     done
 
 }

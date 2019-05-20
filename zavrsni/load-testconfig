@@ -141,17 +141,15 @@ then
 fi
 for host in `ls $TESTDIR/hosts`
 do
-	node=`jls -h jid host.hostname | grep ${host}`
-	nodeID=`echo $node | cut -d " " -f 1`
-	nodeName=`echo $node | cut -d " " -f 2`
-	
+
 	# copy default host folder to IMUNES hosts
-	hcp $DEFDIR/usr/local/bin/expect-connection ${nodeName}:/usr/local/bin/
+	hcp $DEFDIR/usr/local/bin/expect-connection ${host}:/usr/local/bin/
+	himage ${host} chmod +x /usr/local/bin/expect-connection
 	# copy specific host information (private keys, public keys, ...) to IMUNES hosts
-	hcp -r $CERTDIR/${nodeName}/etc/. ${nodeName}:/usr/local/etc/
+	hcp -r $CERTDIR/${host}/etc/. ${host}:/usr/local/etc/
 
 
-	hcp $TESTDIR/hosts/${host}/etc/* ${nodeName}:/usr/local/etc/
+	hcp $TESTDIR/hosts/${host}/etc/* ${host}:/usr/local/etc/
 done
 
 ##########################################################################
