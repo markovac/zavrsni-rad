@@ -136,10 +136,10 @@ done
 # nepotrebno?
 
 [ -f $SHAREDDIR/.strongswan-version ] && SWANVERSION=`cat $SHAREDDIR/.strongswan-version`
-KERNELVERSION=`ssh $SSHCONF root@\$ipv4_winnetou uname -r 2>/dev/null`
+KERNELVERSION=`himage winnetou uname -r 2>/dev/null`
 
 # check if tcpdump supports --immediate-mode
-ssh $SSHCONF root@$ipv4_winnetou tcpdump --immediate-mode -c 1 >/dev/null 2>&1
+himage winnetou tcpdump --immediate-mode -c 1 >/dev/null 2>&1
 if [ $? -eq 0 ]
 then
 	TCPDUMP_IM=--immediate-mode
@@ -361,7 +361,7 @@ do
 	    do
 		host=`echo $host_iface | awk -F ":" '{print $1}'`
 		iface=`echo $host_iface | awk -F ":" '{if ($2 != "") { print $2 } else { printf("eth0") }}'`
-		tcpdump_cmd="tcpdump -l $TCPDUMP_IM -i $iface not port ssh and not port domain >/tmp/tcpdump.log 2>/tmp/tcpdump.err.log &"
+		#tcpdump_cmd="tcpdump -l $TCPDUMP_IM -i $iface not port ssh and not port domain >/tmp/tcpdump.log 2>/tmp/tcpdump.err.log &"
 		echo "$(print_time)${host}# $tcpdump_cmd" >> $CONSOLE_LOG
 		#ssh $SSHCONF root@`eval echo \\\$ipv4_$host '$tcpdump_cmd'`
 		#eval TDUP_${host}="true"
@@ -383,29 +383,29 @@ do
 	# flush conntrack table on all hosts
 	#
 
-	#for host in $STRONGSWANHOSTS
-	#do
-	#	ssh $SSHCONF root@`eval echo \\\$ipv4_$host` 'conntrack -F' >/dev/null 2>&1
-	#done
+	for host in $STRONGSWANHOSTS
+	do
+		himage $host conntrack -F >/dev/null 2>&1
+	done
 
 	##########################################################################
 	# remove leak detective log on all hosts
 	#
 
-	#export LEAK_DETECTIVE_LOG=/var/log/leak-detective.log
-	#for host in $STRONGSWANHOSTS
-	#do
-	#	ssh $SSHCONF root@`eval echo \\\$ipv4_$host` 'rm -f $LEAK_DETECTIVE_LOG' >/dev/null 2>&1
-	#done
+	export LEAK_DETECTIVE_LOG=/var/log/leak-detective.log
+	for host in $STRONGSWANHOSTS
+	do
+		himage $host rm -f $LEAK_DETECTIVE_LOG >/dev/null 2>&1
+	done
 
 	##########################################################################
 	# flush IPsec state on all hosts
 	#
 
-	#for host in $STRONGSWANHOSTS
-	#do
-	#	ssh $SSHCONF root@`eval echo \\\$ipv4_$host` 'ip xfrm state flush; ip xfrm policy flush' >/dev/null 2>&1
-	#done
+	for host in $STRONGSWANHOSTS
+	do
+		himage $host 'ip xfrm state flush; ip xfrm policy flush' >/dev/null 2>&1
+	done
 
 	##########################################################################
 	# execute pre-test commands
@@ -440,11 +440,10 @@ do
 		
 		#TODO - za sada preskace naredbe vezane za firewall
 		[[ "$command" == *"iptables"* ]] && continue
-		echo $command
 		
 		himage $name $command
-	done < $CURRENTDAT 
-	exit 1
+	done < $CURRENTDAT >> $CONSOLE_LOG 2>&1
+
 
 	##########################################################################
 	# stop tcpdump
@@ -452,10 +451,10 @@ do
 
 	function stop_tcpdump {
 	    # wait for packets to get processed, but don't wait longer than 1s
-	    #eval ssh $SSHCONF root@\$ipv4_${1} "\"i=100; while [ \\\$i -gt 0 ]; do pkill -USR1 tcpdump; tail -1 /tmp/tcpdump.err.log | perl -n -e '/(\\d+).*?(\\d+)/; exit (\\\$1 == \\\$2)' || break; sleep 0.01; i=\\\$((\\\$i-1)); done;\""
+	    eval himage ${1} "\"i=100; while [ \\\$i -gt 0 ]; do pkill -USR1 tcpdump; tail -1 /tmp/tcpdump.err.log | perl -n -e '/(\\d+).*?(\\d+)/; exit (\\\$1 == \\\$2)' || break; sleep 0.01; i=\\\$((\\\$i-1)); done;\""
 	    echo "$(print_time)${1}# killall tcpdump" >> $CONSOLE_LOG
-	    #eval ssh $SSHCONF root@\$ipv4_${1} "\"killall tcpdump; while true; do killall -q -0 tcpdump || break; sleep 0.01; done;\""
-	    #eval TDUP_${1}="false"
+	    eval himage ${1} "\"killall tcpdump; while true; do killall -q -0 tcpdump || break; sleep 0.01; done;\""
+	    eval TDUP_${1}="false"
 	    echo "" >> $CONSOLE_LOG
 	}
 
@@ -466,63 +465,65 @@ do
 
 	echo -n "test.."
 	echo -e "\nTEST\n" >> $CONSOLE_LOG 2>&1
-	exit 2
-	STATUS="passed"
 	
-	eval `awk -F "::" '{
-		host=$1
-		command=$2
-		pattern=$3
-		hit=$4
-		if (host ~ /^#.*/ || command == "")
-		{
-			next
-		}
-		printf("cmd_err=\044(tempfile -p test -s err); ")
-		printf("cmd_out=\044(tempfile -p test -s out); ")
-		if (command == "tcpdump")
-		{
-			printf("if [ \044TDUP_%s == \"true\" ]; then stop_tcpdump %s; fi; \n", host, host)
-			printf("ssh \044SSHCONF root@\044ipv4_%s cat /tmp/tcpdump.log > \044cmd_out; ", host)
-		}
-		else
-		{
-			printf("ssh \044SSHCONF root@\044ipv4_%s %s >\044cmd_out 2>\044cmd_err; ",  host, command)
-		}
-		printf("cmd_res=\044(cat \044cmd_out | grep \"%s\"); ", pattern)
-		printf("cmd_exit=\044?; ")
-		printf("cmd_fail=0; ")
-		if (hit ~ /^[0-9]+$/)
-		{
-			printf("if [ \044(echo \"\044cmd_res\" | wc -l) -ne %d ] ", hit)
-		}
-		else
-		{
-			printf("if [ \044cmd_exit -eq 0 -a \"%s\" = \"NO\"  ] ", hit)
-			printf("|| [ \044cmd_exit -ne 0 -a \"%s\" = \"YES\" ] ", hit)
-		}
-		printf("; then STATUS=\"failed\"; cmd_fail=1; fi; \n")
+	STATUS="passed"
+	# -- old code --
+	#eval `awk -F "::" '{
+	#	host=$1
+	#	command=$2
+	#	pattern=$3
+	#	hit=$4
+	#	if (host ~ /^#.*/ || command == "")
+	#	{
+	#		next
+	#	}
+	#	printf("cmd_err=\044(tempfile -p test -s err); ")
+	#	printf("cmd_out=\044(tempfile -p test -s out); ")
+	#	if (command == "tcpdump")
+	#	{
+	#		printf("if [ \044TDUP_%s == \"true\" ]; then stop_tcpdump %s; fi; \n", host, host)
+	#		printf("ssh \044SSHCONF root@\044ipv4_%s cat /tmp/tcpdump.log > \044cmd_out; ", host)
+	#	}
+	#	else
+	#	{
+	#		printf("ssh \044SSHCONF root@\044ipv4_%s %s >\044cmd_out 2>\044cmd_err; ",  host, command)
+	#	}
+	#	printf("cmd_res=\044(cat \044cmd_out | grep \"%s\"); ", pattern)
+	#	printf("cmd_exit=\044?; ")
+	#	printf("cmd_fail=0; ")
+	#	if (hit ~ /^[0-9]+$/)
+	#	{
+	#		printf("if [ \044(echo \"\044cmd_res\" | wc -l) -ne %d ] ", hit)
+	#	}
+	#	else
+	#	{
+	#		printf("if [ \044cmd_exit -eq 0 -a \"%s\" = \"NO\"  ] ", hit)
+	#		printf("|| [ \044cmd_exit -ne 0 -a \"%s\" = \"YES\" ] ", hit)
+	#	}
+	#	printf("; then STATUS=\"failed\"; cmd_fail=1; fi; \n")
+	#
+	#	printf("if [ \044cmd_fail -ne 0 ]; then echo \"~~~~~~~ FAIL ~~~~~~~\"; fi; \n")
+	#	if (command == "tcpdump")
+	#	{
+	#		printf("echo \"$(print_time)%s# cat /tmp/tcpdump.log | grep \047%s\047  [%s]\"; ", host, pattern, hit)
+	#	}
+	#	else
+	#	{
+	#		printf("echo \"$(print_time)%s# %s | grep \047%s\047  [%s]\"; ", host, command, pattern, hit)
+	#	}
+	#	printf("if [ -n \"\044cmd_res\" ]; then echo \"\044cmd_res\"; fi; \n")
+	#	printf("cat \044cmd_err; \n")
+	#	printf("if [ \044cmd_fail -ne 0 ]; then \n")
+	#	printf("if [ -s \044cmd_out ]; then echo \"~~ output ~~~~~~~~~~\"; \n")
+	#	printf("if [ \"\044verbose\" == \"YES\" ]; then cat \044cmd_out;\n")
+	#	printf("else cat \044cmd_out | head; fi; fi; \n")
+	#	printf("echo \"~~~~~~~~~~~~~~~~~~~~\"; fi; \n")
+	#	printf("rm -f -- \044cmd_out \044cmd_err; \n")
+	#	printf("echo; ")
+	#}' $TESTDIR/evaltest.dat` >> $CONSOLE_LOG 2>&1
 
-		printf("if [ \044cmd_fail -ne 0 ]; then echo \"~~~~~~~ FAIL ~~~~~~~\"; fi; \n")
-		if (command == "tcpdump")
-		{
-			printf("echo \"$(print_time)%s# cat /tmp/tcpdump.log | grep \047%s\047  [%s]\"; ", host, pattern, hit)
-		}
-		else
-		{
-			printf("echo \"$(print_time)%s# %s | grep \047%s\047  [%s]\"; ", host, command, pattern, hit)
-		}
-		printf("if [ -n \"\044cmd_res\" ]; then echo \"\044cmd_res\"; fi; \n")
-		printf("cat \044cmd_err; \n")
-		printf("if [ \044cmd_fail -ne 0 ]; then \n")
-		printf("if [ -s \044cmd_out ]; then echo \"~~ output ~~~~~~~~~~\"; \n")
-		printf("if [ \"\044verbose\" == \"YES\" ]; then cat \044cmd_out;\n")
-		printf("else cat \044cmd_out | head; fi; fi; \n")
-		printf("echo \"~~~~~~~~~~~~~~~~~~~~\"; fi; \n")
-		printf("rm -f -- \044cmd_out \044cmd_err; \n")
-		printf("echo; ")
-	}' $TESTDIR/evaltest.dat` >> $CONSOLE_LOG 2>&1
 
+	# TODO evaltest
 
 	##########################################################################
 	# log statusall and listall output
@@ -550,63 +551,61 @@ do
     </ul>
     <img src="../../images/$DIAGRAM" alt="$VIRTHOSTS">
 @EOF
+	
+	# firewall
+	#IPTABLES_CMD_V4="echo -e '=== filter table ==='; iptables  -v -n -L; echo -e '\n=== nat table ==='; iptables  -v -n -t nat -L; echo -e '\n=== mangle table ==='; iptables  -v -n -t mangle -L"
+	#IPTABLES_CMD_V6="echo -e '=== filter table ==='; ip6tables -v -n -L; echo -e '\n=== nat table ==='; ip6tables -v -n -t nat -L; echo -e '\n=== mangle table ==='; ip6tables -v -n -t mangle -L"
 
-	IPTABLES_CMD_V4="echo -e '=== filter table ==='; iptables  -v -n -L; echo -e '\n=== nat table ==='; iptables  -v -n -t nat -L; echo -e '\n=== mangle table ==='; iptables  -v -n -t mangle -L"
-	IPTABLES_CMD_V6="echo -e '=== filter table ==='; ip6tables -v -n -L; echo -e '\n=== nat table ==='; ip6tables -v -n -t nat -L; echo -e '\n=== mangle table ==='; ip6tables -v -n -t mangle -L"
+	#if [ -n "$IPV6" ]
+	#then
+	#    IPROUTE_CMD="ip -6 route list table $SOURCEIP_ROUTING_TABLE"
+	#    IPROUTE_DSP=$IPROUTE_CMD
+	#    IPTABLES_CMD="$IPTABLES_CMD_V6"
+	#    IPTABLES_DSP="ip6tables -L"
+	#    IPTABLES_SAVE_CMD="ip6tables-save"
+	#    IPTABLES_SAVE_DSP="ip6tables-save"
+	#else
+	#    IPROUTE_CMD="ip route list table $SOURCEIP_ROUTING_TABLE"
+	#    IPROUTE_DSP=$IPROUTE_CMD
+	#    IPTABLES_CMD="$IPTABLES_CMD_V4"
+	#    IPTABLES_DSP="iptables -L"
+	#    IPTABLES_SAVE_CMD="iptables-save"
+	#    IPTABLES_SAVE_DSP="iptables-save"
+	#fi
 
-	if [ -n "$IPV6" ]
-	then
-	    IPROUTE_CMD="ip -6 route list table $SOURCEIP_ROUTING_TABLE"
-	    IPROUTE_DSP=$IPROUTE_CMD
-	    IPTABLES_CMD="$IPTABLES_CMD_V6"
-	    IPTABLES_DSP="ip6tables -L"
-	    IPTABLES_SAVE_CMD="ip6tables-save"
-	    IPTABLES_SAVE_DSP="ip6tables-save"
-	else
-	    IPROUTE_CMD="ip route list table $SOURCEIP_ROUTING_TABLE"
-	    IPROUTE_DSP=$IPROUTE_CMD
-	    IPTABLES_CMD="$IPTABLES_CMD_V4"
-	    IPTABLES_DSP="iptables -L"
-	    IPTABLES_SAVE_CMD="iptables-save"
-	    IPTABLES_SAVE_DSP="iptables-save"
-	fi
-
-	if [ $name = "net2net-ip4-in-ip6-ikev2" -o $name = "net2net-ip6-in-ip4-ikev2" ]
-	then
-	    IPROUTE_CMD="ip route list table $SOURCEIP_ROUTING_TABLE; echo; ip -6 route list table $SOURCEIP_ROUTING_TABLE"
-	    IPROUTE_DSP="ip (-6) route list table $SOURCEIP_ROUTING_TABLE"
-	    IPTABLES_CMD="$IPTABLES_CMD_V4; echo; $IPTABLES_CMD_V6"
-	    IPTABLES_DSP="iptables -L ; ip6tables -L"
-	    IPTABLES_SAVE_CMD="iptables-save; echo; ip6tables-save"
-	    IPTABLES_SAVE_DSP="iptables-save ; ip6tables-save"
-	fi
+	#if [ $name = "net2net-ip4-in-ip6-ikev2" -o $name = "net2net-ip6-in-ip4-ikev2" ]
+	#then
+	#    IPROUTE_CMD="ip route list table $SOURCEIP_ROUTING_TABLE; echo; ip -6 route list table $SOURCEIP_ROUTING_TABLE"
+	#    IPROUTE_DSP="ip (-6) route list table $SOURCEIP_ROUTING_TABLE"
+	#    IPTABLES_CMD="$IPTABLES_CMD_V4; echo; $IPTABLES_CMD_V6"
+	#    IPTABLES_DSP="iptables -L ; ip6tables -L"
+	#    IPTABLES_SAVE_CMD="iptables-save; echo; ip6tables-save"
+	#    IPTABLES_SAVE_DSP="iptables-save ; ip6tables-save"
+	#fi
 
 	for host in $DBHOSTS
 	do
-	    eval HOSTLOGIN=root@\$ipv4_${host}
-
-		scp $SSHCONF $HOSTLOGIN:/etc/db.d/ipsec.sql \
+		hcp ${host}:/etc/db.d/ipsec.sql \
 		    $TESTRESULTDIR/${host}.ipsec.sql  > /dev/null 2>&1
 	done
 
 	for host in $IPSECHOSTS
 	do
-	    eval HOSTLOGIN=root@\$ipv4_${host}
 
-		scp $SSHCONF $HOSTLOGIN:/etc/strongswan.conf \
+		hcp ${host}:/etc/strongswan.conf \
 		    $TESTRESULTDIR/${host}.strongswan.conf  > /dev/null 2>&1
 		if [  -n "$SWANCTL" ]
 		then
-			scp $SSHCONF $HOSTLOGIN:/etc/swanctl/swanctl.conf \
+			hcp ${host}:/etc/swanctl/swanctl.conf \
 			$TESTRESULTDIR/${host}.swanctl.conf  > /dev/null 2>&1
 
 			for subsys in conns algs certs pools authorities sas pols
 			do
-				ssh $SSHCONF $HOSTLOGIN swanctl --list-$subsys \
+				himage ${host} swanctl --list-$subsys \
 					> $TESTRESULTDIR/${host}.swanctl.$subsys 2>/dev/null
 			done
 
-			ssh $SSHCONF $HOSTLOGIN swanctl --stats \
+			himage ${host} swanctl --stats \
 				> $TESTRESULTDIR/${host}.swanctl.stats 2>/dev/null
 
 			echo "" >> $TESTRESULTDIR/${host}.swanctl.sas
@@ -617,31 +616,32 @@ do
 		else
 		    for file in ipsec.conf ipsec.secrets
 		    do
-				scp $SSHCONF $HOSTLOGIN:/etc/$file \
+				hcp ${host}:/etc/$file \
 			    $TESTRESULTDIR/${host}.$file  > /dev/null 2>&1
 		    done
 
 		    for command in statusall listall
 		    do
-				ssh $SSHCONF $HOSTLOGIN ipsec $command \
+				himage ${host} ipsec $command \
 			    > $TESTRESULTDIR/${host}.$command 2>/dev/null
 		    done
 		fi
 
 		if (! [ -f $TESTRESULTDIR/${host}.ipsec.sql ] ) then
-			scp $SSHCONF $HOSTLOGIN:/etc/ipsec.d/ipsec.sql \
+			hcp ${host}:/etc/ipsec.d/ipsec.sql \
 				$TESTRESULTDIR/${host}.ipsec.sql  > /dev/null 2>&1
 		fi
 
-	    ssh $SSHCONF $HOSTLOGIN ip -s xfrm policy \
+#TODO - ip ne postoji u freebsdu
+	    himage ${host} ip -s xfrm policy \
 		    > $TESTRESULTDIR/${host}.ip.policy 2>/dev/null
-	    ssh $SSHCONF $HOSTLOGIN ip -s xfrm state \
+	    himage ${host} ip -s xfrm state \
 		    > $TESTRESULTDIR/${host}.ip.state 2>/dev/null
-	    ssh $SSHCONF $HOSTLOGIN $IPROUTE_CMD \
+	    himage ${host} $IPROUTE_CMD \
 		    > $TESTRESULTDIR/${host}.ip.route 2>/dev/null
-	    ssh $SSHCONF $HOSTLOGIN $IPTABLES_CMD \
+	    himage ${host} $IPTABLES_CMD \
 		    > $TESTRESULTDIR/${host}.iptables 2>/dev/null
-		ssh $SSHCONF $HOSTLOGIN $IPTABLES_SAVE_CMD \
+		himage ${host} $IPTABLES_SAVE_CMD \
 		    > $TESTRESULTDIR/${host}.iptables-save 2>/dev/null
 	    chmod a+r $TESTRESULTDIR/*
 
@@ -722,8 +722,6 @@ do
 
 	for host in $RADIUSHOSTS
 	do
-	    eval HOSTLOGIN=root@\$ipv4_${host}
-
 		RADIUS_DIR=/etc/freeradius/3.0
 		RADIUS_EAP_FILE=mods-enabled/eap
 		RADIUS_EAP_NAME=eap
@@ -736,11 +734,11 @@ do
 
 		for file in clients.conf radiusd.conf proxy.conf users sites-enabled/default sites-enabled/inner-tunnel $RADIUS_EAP_FILE
 	    do
-		scp $SSHCONF $HOSTLOGIN:$RADIUS_DIR/$file \
+		hcp ${host}:$RADIUS_DIR/$file \
 		    $TESTRESULTDIR/${host}.$(basename $file) > /dev/null 2>&1
 	    done
 
-	    scp $SSHCONF $HOSTLOGIN:/var/log/freeradius/radius.log \
+	    hcp ${host}:/var/log/freeradius/radius.log \
 		$TESTRESULTDIR/${host}.radius.log  > /dev/null 2>&1
 
 	    chmod a+r $TESTRESULTDIR/*
@@ -804,15 +802,36 @@ do
 
 	echo -n "post"
 	echo -e "\nPOST-TEST\n" >> $CONSOLE_LOG 2>&1
+	CURRENTDAT=$TESTDIR/posttest.dat
 
-	eval `awk -F "::" '{
-	    if ($1 !~ /^#.*/ && $2 != "")
-	    {
-		printf("echo \"$(print_time)%s# %s\"; ", $1, $2)
-		printf("ssh \044SSHCONF root@\044ipv4_%s \"%s\"; ", $1, $2)
-		printf("echo;\n")
-	    }
-	}' $TESTDIR/posttest.dat` >> $CONSOLE_LOG 2>&1
+	# -- old code --
+	#eval `awk -F "::" '{
+	#    if ($1 !~ /^#.*/ && $2 != "")
+	#   {
+	#	printf("echo \"$(print_time)%s# %s\"; ", $1, $2)
+	#	printf("ssh \044SSHCONF root@\044ipv4_%s \"%s\"; ", $1, $2)
+	#	printf("echo;\n")
+	#    }
+	#}' $TESTDIR/posttest.dat` >> $CONSOLE_LOG 2>&1
+	while IFS='::' read -ra line || [[ -n $line ]]
+	do
+		name="0"
+		for part in "${line[@]}"
+		do
+			[ "$part" = '' ] && continue
+			if [ "$name" = "0" ]
+			then
+				name=$part
+			else
+				command=$part
+			fi
+		done
+		
+		#TODO - za sada preskace naredbe vezane za firewall
+		[[ "$command" == *"iptables"* ]] && continue
+		
+		himage $name $command
+	done < $CURRENTDAT >> $CONSOLE_LOG 2>&1
 
 	##########################################################################
 	# check that IPsec state was cleaned up properly
@@ -820,11 +839,10 @@ do
 
 	for host in $IPSECHOSTS
 	do
-		eval HOSTLOGIN=root@\$ipv4_${host}
-		IPSECSTATE=`ssh $SSHCONF $HOSTLOGIN 'ip xfrm state'`
+		IPSECSTATE=`himage ${host} ip xfrm state`
 		# ignore IPv4/v6 states created with IPComp SAs
 		IPSECSTATEISSUE=`echo "$IPSECSTATE" | grep 'proto.*spi' | grep -v 'proto 4'`
-		IPSECPOLICY=`ssh $SSHCONF $HOSTLOGIN 'ip xfrm policy'`
+		IPSECPOLICY=`himage ${host} ip xfrm policy`
 		if [ -n "$IPSECSTATEISSUE" -o -n "$IPSECPOLICY" ]
 		then
 			echo -e "\n$host# ip xfrm state [NO]" >> $CONSOLE_LOG
@@ -842,8 +860,8 @@ do
 
 	for host in $STRONGSWANHOSTS
 	do
-		eval HOSTLOGIN=root@\$ipv4_${host}
-		LEAKS=`ssh $SSHCONF $HOSTLOGIN 'cat $LEAK_DETECTIVE_LOG 2>/dev/null | grep -v "No leaks detected.*"'`
+
+		LEAKS=`himage ${host} 'cat $LEAK_DETECTIVE_LOG 2>/dev/null | grep -v "No leaks detected.*"'`
 		if [ -n "$LEAKS" ]
 		then
 			echo -e "\n$host# cat $LEAK_DETECTIVE_LOG [NO]" >> $CONSOLE_LOG
@@ -860,8 +878,7 @@ do
 
 	for host in $IPSECHOSTS
 	do
-	    eval HOSTLOGIN=root@\$ipv4_${host}
-	    ssh $SSHCONF $HOSTLOGIN "grep -s -E 'charon|last message repeated|imcv|pt-tls-client' \
+	    himage ${host} "grep -s -E 'charon|last message repeated|imcv|pt-tls-client' \
 		/var/log/auth.log" >> $TESTRESULTDIR/${host}.auth.log
 	done
 
@@ -872,8 +889,7 @@ do
 
 	for host in $IPSECHOSTS
 	do
-	    eval HOSTLOGIN=root@\$ipv4_${host}
-	    ssh $SSHCONF $HOSTLOGIN "grep -s -E 'systemd|swanctl|charon|last message repeated|imcv' \
+	    himage ${host} "grep -s -E 'systemd|swanctl|charon|last message repeated|imcv' \
 		/var/log/daemon.log" >> $TESTRESULTDIR/${host}.daemon.log
 	done
 
@@ -888,8 +904,7 @@ do
 	    then
 			stop_tcpdump $host
 	    fi
-	    eval HOSTLOGIN=root@\$ipv4_${host}
-		scp $SSHCONF $HOSTLOGIN:/tmp/tcpdump.log \
+		hcp ${host}:/tmp/tcpdump.log \
 			$TESTRESULTDIR/${host}.tcpdump.log > /dev/null 2>&1
 	done
 
@@ -899,15 +914,14 @@ do
 
 	for host in $DBHOSTS
 	do
-		eval HOSTLOGIN=root@\$ipv4_${host}
-	    ssh $SSHCONF $HOSTLOGIN "umount $DBDIR; rm -r $DBDIR" > /dev/null 2>&1
+		himage ${host} "umount $DBDIR; rm -r $DBDIR" > /dev/null 2>&1
 	done
 
 	##########################################################################
 	# copy default host config back if necessary
 	#
 
-	$DIR/scripts/restore-defaults $testname
+	$DIR/restore-defaults $testname
 
 
 	##########################################################################
@@ -962,8 +976,7 @@ do
 
 	for host in $IPSECHOSTS
 	do
-	    eval HOSTLOGIN=root@\$ipv4_${host}
-	    ssh $SSHCONF $HOSTLOGIN 'if [ -f /var/run/charon.pid ]; then rm /var/run/charon.pid; echo "    removed charon.pid on `hostname`"; fi'
+	    himage ${host} 'if [ -f /var/run/charon.pid ]; then rm /var/run/charon.pid; echo "    removed charon.pid on `hostname`"; fi'
 	done
 
 	if [ -n "$aborted" ]
@@ -1038,3 +1051,5 @@ echo "or via the link http://$ipv4_winnetou/testresults/$TESTDATE"
 ENDDATE=`date +%Y%m%d-%H%M-%S`
 echo
 echo "Finished : $ENDDATE"
+
+. $DIR/clean.sh
