@@ -15,6 +15,7 @@ do
 		target=$HOSTDIR/${conf}/etc/strongswan.conf
 		if [ -e $target ]
 		then
+			echo $target
 			cat $target | sed 's/load/load_modular/g' | cat > $target
 		fi
 	done

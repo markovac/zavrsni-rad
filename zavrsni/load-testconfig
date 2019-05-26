@@ -23,7 +23,7 @@ DIR=$(dirname `readlink -f $0`)
 # load-testconfig requires a testname as an argument
 #
 
-testname="host2host-ah"
+testname=$1
 DEFAULTTESTSDIR="$TESTDIR/demos/tests"
 [ -d $DEFAULTTESTSDIR ] || echo "Directory '$DEFAULTTESTSDIR' not found" || exit 1
 [ -e $DEFAULTTESTSDIR/$testname ] || echo "Test '$testname' not found" || exit 1
@@ -128,7 +128,7 @@ do
     esac
 done
 
-source $TESTDIR/test.conf
+source $DEFAULTTESTSDIR/$testname/test.conf
 
 ##########################################################################
 # copy test specific configurations to IMUNES hosts
