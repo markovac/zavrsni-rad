@@ -1,0 +1,19 @@
+Status of IKE charon daemon (strongSwan 5.5.1, FreeBSD 11.0-RELEASE-p1, i386):
+  uptime: 8 seconds, since Jun 03 10:25:16 2019
+  worker threads: 11 of 16 idle, 5/0/0/0 working, job queue: 0/0/0/0, scheduled: 3
+  loaded plugins: charon aes des blowfish rc2 sha2 sha1 md4 md5 random nonce x509 revocation constraints pubkey pkcs1 pkcs7 pkcs8 pkcs12 pgp dnskey sshkey pem openssl fips-prf xcbc cmac hmac attr kernel-pfkey kernel-pfroute resolve socket-default stroke vici updown eap-identity eap-md5 eap-mschapv2 eap-tls eap-ttls eap-peap xauth-generic whitelist addrblock
+Listening IP addresses:
+  192.168.0.2
+  fc00:1::11
+  10.2.0.1
+  fc00:2::10
+Connections:
+   host-host:  192.168.0.2...192.168.0.1  IKEv2
+   host-host:   local:  [sun.strongswan.org] uses public key authentication
+   host-host:    cert:  "C=CH, O=Linux strongSwan, CN=sun.strongswan.org"
+   host-host:   remote: [moon.strongswan.org] uses public key authentication
+   host-host:   child:  dynamic === dynamic TRANSPORT
+Security Associations (1 up, 0 connecting):
+   host-host[1]: ESTABLISHED 6 seconds ago, 192.168.0.2[sun.strongswan.org]...192.168.0.1[moon.strongswan.org]
+   host-host[1]: IKEv2 SPIs: f4aaba99c5661d4f_i 1e27eb6eda4ca06e_r*, public key reauthentication in 2 hours
+   host-host[1]: IKE proposal: AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_3072

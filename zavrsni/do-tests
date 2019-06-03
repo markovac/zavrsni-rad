@@ -210,29 +210,11 @@ trap abort_tests INT
 # enter specific test directory
 #
 
-# TESTS - popis testnih datoteka
-#if [ $# -gt 0 ]
-#then
-#    TESTS=$(printf "%s\n" $* | sort -u)
-#else
-#    TESTS=$(ls $DEFAULTTESTSDIR)
-#fi
-TESTS=$(ls $DEFAULTTESTSDIR)/..
+TESTS=$(ls $DEFAULTTESTSDIR)
 
 for SUBDIR in $TESTS
 do
     SUBTESTS="`basename $SUBDIR`"
-
-	if [ $SUBTESTS = $SUBDIR ]
-	then
-		SUBTESTS="`ls $DEFAULTTESTSDIR/$SUBDIR`"
-	else
-		if [[ $SUBTESTS == *'*'* ]]
-		then
-			SUBTESTS="`basename -a $DEFAULTTESTSDIR/$SUBDIR`"
-		fi
-		SUBDIR="`dirname $SUBDIR`"
-	fi
 
     if [ ! -d $TODAYDIR/$SUBDIR ]
     then
@@ -291,7 +273,6 @@ do
 @EOF
     fi
 
-	# name je ime svakog testa u demos/tests/ime/*
     for name in $SUBDIR
     do
 
@@ -318,24 +299,11 @@ do
 	CONSOLE_LOG=$TESTRESULTDIR/console.log
 	touch $CONSOLE_LOG
 
-	#testdir postaje temp/build/tests/{ime}
-	#TESTDIR=$TESTSDIR/${testname}
-
 	##########################################################################
 	# copy test specific configurations to hosts and clear log files
 	#
 	
 	. load-testconfig ${testname}
-	
-	#DBDIR=/etc/db.d
-
-	#$DIR/scripts/load-testconfig $testname
-	#unset RADIUSHOSTS
-	#unset DBHOSTS
-	#unset IPV6
-	#unset SWANCTL
-	#source $TESTDIR/test.conf
-
 
 	##########################################################################
 	# run tcpdump in the background
@@ -402,15 +370,6 @@ do
 	echo -e "\nPRE-TEST\n" >> $CONSOLE_LOG 2>&1
 	CURRENTDAT=$TESTDIR/pretest.dat
 	
-	# --- old code ---
-	#eval `awk -F "::" '{
-	#    if ($1 !~ /^#.*/ && $2 != "")
-	#    {
-	#	printf("echo \"$(print_time)%s# %s\"; ", $1, $2)
-	#	printf("ssh \044SSHCONF root@\044ipv4_%s \"%s\"; ", $1, $2)
-	#	printf("echo;\n")
-	#    }
-	#}' $TESTDIR/pretest.dat` >> $CONSOLE_LOG 2>&1
 	while IFS='::' read -ra line || [[ -n $line ]]
 	do
 		name="0"
@@ -505,7 +464,7 @@ do
 		printf("echo \"~~~~~~~~~~~~~~~~~~~~\"; fi; \n")
 		printf("rm -f -- \044cmd_out \044cmd_err; \n")
 		printf("echo; ")
-	}' $TESTDIR/evaltest.dat` #>> $CONSOLE_LOG 2>&1
+	}' $TESTDIR/evaltest.dat` >> $CONSOLE_LOG 2>&1
 
 	##########################################################################
 	# log statusall and listall output
@@ -786,15 +745,6 @@ do
 	echo -e "\nPOST-TEST\n" >> $CONSOLE_LOG 2>&1
 	CURRENTDAT=$TESTDIR/posttest.dat
 
-	# -- old code --
-	#eval `awk -F "::" '{
-	#    if ($1 !~ /^#.*/ && $2 != "")
-	#   {
-	#	printf("echo \"$(print_time)%s# %s\"; ", $1, $2)
-	#	printf("ssh \044SSHCONF root@\044ipv4_%s \"%s\"; ", $1, $2)
-	#	printf("echo;\n")
-	#    }
-	#}' $TESTDIR/posttest.dat` >> $CONSOLE_LOG 2>&1
 	while IFS='::' read -ra line || [[ -n $line ]]
 	do
 		name="0"
@@ -846,6 +796,7 @@ do
 		LEAKS=`himage ${host} cat $LEAK_DETECTIVE_LOG 2>/dev/null | grep -v "No leaks detected.*"`
 		if [ -n "$LEAKS" ]
 		then
+			echo leak detected -> test failed
 			echo -e "\n$host# cat $LEAK_DETECTIVE_LOG [NO]" >> $CONSOLE_LOG
 			echo "$LEAKS" >> $CONSOLE_LOG
 			echo "<<< $host $LEAK_DETECTIVE_LOG >>>" >> $CONSOLE_LOG
@@ -1026,5 +977,3 @@ echo "or via the link http://$ipv4_winnetou/testresults/$TESTDATE"
 ENDDATE=`date +%Y%m%d-%H%M-%S`
 echo
 echo "Finished : $ENDDATE"
-
-. $DIR/clean.sh

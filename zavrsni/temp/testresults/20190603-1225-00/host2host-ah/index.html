@@ -1,0 +1,93 @@
+<html>
+<head>
+  <title>Test host2host-ah</title>
+</head>
+<body>
+<table border="0" cellpadding="0" cellspacing="0" width="600">
+  <tr><td>
+    <div><a href="../../index.html">strongSwan KVM Tests</a> / <a href="../index.html">host2host-ah</a> / moon</div>
+    <h2>Test host2host-ah</h2>
+    <h3>Description</h3>
+An IPsec <b>AH transport-mode</b> connection using AES-XCBC between the hosts
+<b>moon</b> and <b>sun</b> is successfully set up. <b>leftfirewall=yes</b>
+automatically inserts iptables-based firewall rules that let pass the decrypted
+IP packets. In order to test the host-to-host connection <b>moon</b> pings
+<b>sun</b>.
+    <ul>
+      <li><a href="console.log">console.log</a></li>
+    </ul>
+    <img src="../../images/m-w-s.png" alt="moon winnetou sun">
+    <h3>moon</h3>
+      <table border="0" cellspacing="0" width="600">
+      <tr>
+	<td valign="top">
+	  <ul>
+	    <li><a href="moon.ipsec.conf">ipsec.conf</a></li>
+	    <li><a href="moon.ipsec.secrets">ipsec.secrets</a></li>
+	    <li><a href="moon.ipsec.sql">ipsec.sql</a></li>
+	    <li><a href="moon.strongswan.conf">strongswan.conf</a></li>
+	  </ul>
+	</td>
+	<td valign="top">
+	  <ul>
+	    <li><a href="moon.statusall">ipsec statusall</a></li>
+	    <li><a href="moon.listall">ipsec listall</a></li>
+	    <li><a href="moon.auth.log">auth.log</a></li>
+	    <li><a href="moon.daemon.log">daemon.log</a></li>
+	  </ul>
+      </td>
+	<td valign="top">
+	  <ul>
+	    <li><a href="moon.ip.policy">ip -s xfrm policy</a></li>
+	    <li><a href="moon.ip.state">ip -s xfrm state</a></li>
+	    <li><a href="moon.ip.route"></a></li>
+	    <li><a href="moon.iptables"></a></li>
+	    <li><a href="moon.iptables-save"></a></li>
+	  </ul>
+      </td>
+    </tr>
+    </table>
+    <h3>sun</h3>
+      <table border="0" cellspacing="0" width="600">
+      <tr>
+	<td valign="top">
+	  <ul>
+	    <li><a href="sun.ipsec.conf">ipsec.conf</a></li>
+	    <li><a href="sun.ipsec.secrets">ipsec.secrets</a></li>
+	    <li><a href="sun.ipsec.sql">ipsec.sql</a></li>
+	    <li><a href="sun.strongswan.conf">strongswan.conf</a></li>
+	  </ul>
+	</td>
+	<td valign="top">
+	  <ul>
+	    <li><a href="sun.statusall">ipsec statusall</a></li>
+	    <li><a href="sun.listall">ipsec listall</a></li>
+	    <li><a href="sun.auth.log">auth.log</a></li>
+	    <li><a href="sun.daemon.log">daemon.log</a></li>
+	  </ul>
+      </td>
+	<td valign="top">
+	  <ul>
+	    <li><a href="sun.ip.policy">ip -s xfrm policy</a></li>
+	    <li><a href="sun.ip.state">ip -s xfrm state</a></li>
+	    <li><a href="sun.ip.route"></a></li>
+	    <li><a href="sun.iptables"></a></li>
+	    <li><a href="sun.iptables-save"></a></li>
+	  </ul>
+      </td>
+    </tr>
+    </table>
+	<h3>tcpdump</h3>
+	<ul>
+	    <li><a href="sun.tcpdump.log">sun tcpdump.log</a></li>
+	</ul>
+  </td></tr>
+</table>
+</body>
+</html>
+  <tr>
+    <td>1</td>
+    <td><a href="sun/index.html">sun</a></td>
+    <td><a href="sun/console.log"><font color="red">failed</font></a></td>
+    <td>&nbsp;</td>
+  </tr>

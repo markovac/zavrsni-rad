@@ -1,0 +1,20 @@
+Status of IKE charon daemon (strongSwan 5.5.1, FreeBSD 11.0-RELEASE-p1, i386):
+  uptime: 44 seconds, since Jun 03 10:25:48 2019
+  worker threads: 11 of 16 idle, 5/0/0/0 working, job queue: 0/0/0/0, scheduled: 3
+  loaded plugins: charon aes des blowfish rc2 sha2 sha1 md4 md5 random nonce x509 revocation constraints pubkey pkcs1 pkcs7 pkcs8 pkcs12 pgp dnskey sshkey pem openssl fips-prf xcbc cmac hmac attr kernel-pfkey kernel-pfroute resolve socket-default stroke vici updown eap-identity eap-md5 eap-mschapv2 eap-tls eap-ttls eap-peap xauth-generic whitelist addrblock
+Listening IP addresses:
+  192.168.0.100
+  fc00:1::21
+Connections:
+        home:  192.168.0.100...192.168.0.1  IKEv2
+        home:   local:  [carol@strongswan.org] uses public key authentication
+        home:    cert:  "C=CH, O=Linux strongSwan, OU=Research, CN=carol@strongswan.org"
+        home:   remote: [moon.strongswan.org] uses public key authentication
+        home:   child:  dynamic === 10.1.0.0/16 TUNNEL
+Security Associations (1 up, 0 connecting):
+        home[1]: ESTABLISHED 42 seconds ago, 192.168.0.100[carol@strongswan.org]...192.168.0.1[moon.strongswan.org]
+        home[1]: IKEv2 SPIs: 61693a20f4459e25_i* b13ea9518bc17fea_r, public key reauthentication in 53 minutes
+        home[1]: IKE proposal: AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_3072
+        home{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: c5cde8e8_i cf42023a_o
+        home{1}:  AES_CBC_128/HMAC_SHA2_256_128, 84 bytes_i (1 pkt, 18s ago), 312 bytes_o (2 pkts, 18s ago), rekeying in 14 minutes
+        home{1}:   10.3.0.1/32 === 10.1.0.0/16

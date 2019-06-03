@@ -24,7 +24,6 @@ DIR=$(dirname `readlink -f $0`)
 #
 
 testname=$1
-DEFAULTTESTSDIR="$TESTDIR/demos/tests"
 [ -d $DEFAULTTESTSDIR ] || echo "Directory '$DEFAULTTESTSDIR' not found" || exit 1
 [ -e $DEFAULTTESTSDIR/$testname ] || echo "Test '$testname' not found" || exit 1
 [ -f $DEFAULTTESTSDIR/$testname/test.conf ] || echo "File 'test.conf' is missing" || exit 1
@@ -126,6 +125,10 @@ do
     searchandreplace PH_IP6_WINNETOU $ipv6_winnetou $TESTDIR
     ;;
     esac
+    
+    #Dodaj tcpdump.log na svaki cvor
+    himage moon touch /tmp/tcpdump.log
+    
 done
 
 source $DEFAULTTESTSDIR/$testname/test.conf
@@ -158,8 +161,7 @@ done
 
 for host in $IPSECHOSTS
 do
-    HOSTLOGIN=`jls -h path host.hostname | grep ${host} | cut -d " " -f 1`
-    ssh $SSHCONF $HOSTLOGIN 'rm -f /var/log/auth.log /var/log/daemon.log; \
+    himage $host 'rm -f /var/log/auth.log /var/log/daemon.log; \
 		    kill -SIGHUP `cat /var/run/rsyslogd.pid`' > /dev/null 2>&1
 done
 
@@ -169,7 +171,6 @@ done
 
 for host in $RADIUSHOSTS
 do
-    HOSTLOGIN=`jls -h path host.hostname | grep ${host} | cut -d " " -f 1`
-    ssh $SSHCONF $HOSTLOGIN 'rm -f /var/log/daemon.log /var/log/freeradius/radius.log; \
+    himage $host 'rm -f /var/log/daemon.log /var/log/freeradius/radius.log; \
 		    kill -SIGHUP `cat /var/run/rsyslogd.pid`' > /dev/null 2>&1
 done

@@ -1,0 +1,28 @@
+Status of IKE charon daemon (strongSwan 5.5.1, FreeBSD 11.0-RELEASE-p1, i386):
+  uptime: 44 seconds, since Jun 03 10:25:47 2019
+  worker threads: 11 of 16 idle, 5/0/0/0 working, job queue: 0/0/0/0, scheduled: 4
+  loaded plugins: charon aes des blowfish rc2 sha2 sha1 md4 md5 random nonce x509 revocation constraints pubkey pkcs1 pkcs7 pkcs8 pkcs12 pgp dnskey sshkey pem openssl fips-prf xcbc cmac hmac attr kernel-pfkey kernel-pfroute resolve socket-default stroke vici updown eap-identity eap-md5 eap-mschapv2 eap-tls eap-ttls eap-peap xauth-generic whitelist addrblock
+Listening IP addresses:
+  10.1.0.1
+  fc00::10
+  192.168.0.1
+  fc00:1::10
+Connections:
+          rw:  192.168.0.1...%any  IKEv2
+          rw:   local:  [moon.strongswan.org] uses public key authentication
+          rw:    cert:  "C=CH, O=Linux strongSwan, CN=moon.strongswan.org"
+          rw:   remote: uses public key authentication
+          rw:   child:  10.1.0.0/16 === dynamic TUNNEL
+Security Associations (2 up, 0 connecting):
+          rw[2]: ESTABLISHED 39 seconds ago, 192.168.0.1[moon.strongswan.org]...192.168.0.200[dave@strongswan.org]
+          rw[2]: IKEv2 SPIs: 5fae001064c2ad2b_i 12c43c3b10970155_r*, public key reauthentication in 53 minutes
+          rw[2]: IKE proposal: AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_3072
+          rw{2}:  INSTALLED, TUNNEL, reqid 2, ESP SPIs: ccfb65df_i c3f1ba69_o
+          rw{2}:  AES_CBC_128/HMAC_SHA2_256_128, 168 bytes_i (2 pkts, 5s ago), 156 bytes_o (1 pkt, 5s ago), rekeying in 14 minutes
+          rw{2}:   10.1.0.0/16 === 10.3.0.2/32
+          rw[1]: ESTABLISHED 41 seconds ago, 192.168.0.1[moon.strongswan.org]...192.168.0.100[carol@strongswan.org]
+          rw[1]: IKEv2 SPIs: 61693a20f4459e25_i b13ea9518bc17fea_r*, public key reauthentication in 56 minutes
+          rw[1]: IKE proposal: AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_3072
+          rw{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: cf42023a_i c5cde8e8_o
+          rw{1}:  AES_CBC_128/HMAC_SHA2_256_128, 168 bytes_i (2 pkts, 17s ago), 156 bytes_o (1 pkt, 17s ago), rekeying in 13 minutes
+          rw{1}:   10.1.0.0/16 === 10.3.0.1/32
