@@ -13,6 +13,8 @@ node n0 {
 	 ip address 127.0.0.1/24
 	 ipv6 address ::1/128
 	!
+	ip route 0.0.0.0/24 10.1.0.1
+	!
     }
     canvas c0
     iconcoords {72 24}
@@ -34,6 +36,8 @@ node n1 {
 	 type lo
 	 ip address 127.0.0.1/24
 	 ipv6 address ::1/128
+	!
+	ip route 0.0.0.0/24 10.1.0.1
 	!
     }
     canvas c0
@@ -57,7 +61,8 @@ node n2 {
 }
 
 node n3 {
-    type host
+    type router
+    model quagga
     network-config {
 	hostname moon
 	!
@@ -76,6 +81,18 @@ node n3 {
 	 ip address 127.0.0.1/24
 	 ipv6 address ::1/128
 	!
+	router rip
+	 redistribute static
+	 redistribute connected
+	 redistribute ospf
+	 network 0.0.0.0/0
+	!
+	router ripng
+	 redistribute static
+	 redistribute connected
+	 redistribute ospf6
+	 network ::/0
+	!
     }
     canvas c0
     iconcoords {264 168}
@@ -85,7 +102,8 @@ node n3 {
 }
 
 node n4 {
-    type host
+    type router
+    model quagga
     network-config {
 	hostname sun
 	!
@@ -103,6 +121,18 @@ node n4 {
 	 type lo
 	 ip address 127.0.0.1/24
 	 ipv6 address ::1/128
+	!
+	router rip
+	 redistribute static
+	 redistribute connected
+	 redistribute ospf
+	 network 0.0.0.0/0
+	!
+	router ripng
+	 redistribute static
+	 redistribute connected
+	 redistribute ospf6
+	 network ::/0
 	!
     }
     canvas c0
@@ -190,6 +220,8 @@ node n9 {
 	 type lo
 	 ip address 127.0.0.1/24
 	 ipv6 address ::1/128
+	!
+	ip route 0.0.0.0/24 10.2.0.1
 	!
     }
     canvas c0

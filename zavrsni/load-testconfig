@@ -127,8 +127,8 @@ do
     esac
     
     #Dodaj tcpdump.log na svaki cvor
-    himage moon touch /tmp/tcpdump.log
-    
+    #himage $host touch /tmp/tcpdump.log
+    #himage $host touch /tmp/tcpdump.err.log
 done
 
 source $DEFAULTTESTSDIR/$testname/test.conf

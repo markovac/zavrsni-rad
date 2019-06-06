@@ -52,18 +52,18 @@ subdir_cnt="0"
 # parse optional arguments
 #
 
-#while getopts "vt" opt
-#do
-#	case "$opt" in
-#	v)
-#		verbose=YES
-#		timestamps=YES
-#		;;
-#	t)
-#		timestamps=YES
-#		;;
-#	esac
-#done
+while getopts "vt" opt
+do
+	case "$opt" in
+	v)
+		verbose=YES
+		timestamps=YES
+		;;
+	t)
+		timestamps=YES
+		;;
+	esac
+done
 shift $((OPTIND-1))
 
 function print_time()
@@ -126,11 +126,11 @@ done
 KERNELVERSION=`himage winnetou uname -r 2>/dev/null`
 
 # check if tcpdump supports --immediate-mode
-#himage winnetou tcpdump --immediate-mode -c 1 -v >/dev/null 2>&1  #todo vrti se beskonacno dugo
-#if [ $? -eq 0 ]
-#then
-#	TCPDUMP_IM=--immediate-mode
-#fi
+himage winnetou bash -c 'tcpdump --immediate-mode -c 1 -v >/dev/null 2>&1' 
+if [ $? -eq 0 ]
+then
+	TCPDUMP_IM=--immediate-mode
+fi
 
 ##############################################################################
 # create header for the results html file
@@ -317,12 +317,12 @@ do
 	    do
 		host=`echo $host_iface | awk -F ":" '{print $1}'`
 		iface=`echo $host_iface | awk -F ":" '{if ($2 != "") { print $2 } else { printf("eth0") }}'`
-		tcpdump_cmd="tcpdump -l $TCPDUMP_IM -i $iface not port ssh and not port domain >/tmp/tcpdump.log 2>/tmp/tcpdump.err.log &"
+		tcpdump_cmd="tcpdump -w /tmp/tcpdump.log &"
 		echo "$(print_time)${host}# $tcpdump_cmd" >> $CONSOLE_LOG
-		#himage eval `echo \\\$ipv4_$host '$tcpdump_cmd'`
-		eval TDUP_${host}="true"
-	    done
-	fi
+		eval himage $host $tcpdump_cmd
+		eval TDUP_${host_iface}="true"
+	    done 
+	fi >> /dev/null 2>&1
 
 	##########################################################################
 	# create database directory in RAM
@@ -396,12 +396,14 @@ do
 
 	function stop_tcpdump {
 	    # wait for packets to get processed, but don't wait longer than 1s
-	    eval himage ${1} "\"i=100; while [ \\\$i -gt 0 ]; do pkill -USR1 tcpdump; tail -1 /tmp/tcpdump.err.log | perl -n -e '/(\\d+).*?(\\d+)/; exit (\\\$1 == \\\$2)' || break; sleep 0.01; i=\\\$((\\\$i-1)); done;\""
+	    #eval himage ${1} bash -c "\"i=100; while [ \\\$i -gt 0 ]; do pkill tcpdump; tail -1 /tmp/tcpdump.err.log | perl -n -e '/(\\d+).*?(\\d+)/; exit (\\\$1 == \\\$2)' || break; sleep 0.01; i=\\\$((\\\$i-1)); done;\""
+
+	    eval himage ${1} pkill -x "tcpdump"
 	    echo "$(print_time)${1}# killall tcpdump" >> $CONSOLE_LOG
-	    eval himage ${1} "\"killall tcpdump; while true; do killall -q -0 tcpdump || break; sleep 0.01; done;\""
+	    eval himage ${1} bash -c "\"killall tcpdump; while true; do killall -q -0 tcpdump || break; sleep 0.01; done;\""
 	    eval TDUP_${1}="false"
 	    echo "" >> $CONSOLE_LOG
-	}
+	} >> /dev/null 2>&1
 
 
 	##########################################################################
@@ -426,7 +428,7 @@ do
 		if (command == "tcpdump")
 		{
 			printf("if [ \044TDUP_%s == \"true\" ]; then stop_tcpdump %s; fi; \n", host, host)
-			printf("himage %s cat /tmp/tcpdump.log > \044cmd_out; ", host)
+			printf("himage %s tcpdump -r /tmp/tcpdump.log > \044cmd_out; ", host)
 		}
 		else
 		{
@@ -449,7 +451,7 @@ do
 		printf("if [ \044cmd_fail -ne 0 ]; then echo \"~~~~~~~ FAIL ~~~~~~~\"; fi; \n")
 		if (command == "tcpdump")
 		{
-			printf("echo \"$(print_time)%s# cat /tmp/tcpdump.log | grep \047%s\047  [%s]\"; ", host, pattern, hit)
+			printf("echo \"$(print_time)%s# tcpdump -r /tmp/tcpdump.log | grep \047%s\047  [%s]\"; ", host, pattern, hit)
 		}
 		else
 		{
