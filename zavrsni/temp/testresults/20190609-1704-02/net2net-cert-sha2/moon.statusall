@@ -1,0 +1,22 @@
+Status of IKE charon daemon (strongSwan 5.5.1, FreeBSD 11.0-RELEASE-p1, i386):
+  uptime: 32 seconds, since Jun 09 15:05:28 2019
+  worker threads: 11 of 16 idle, 5/0/0/0 working, job queue: 0/0/0/0, scheduled: 3
+  loaded plugins: charon aes des blowfish rc2 sha2 sha1 md4 md5 random nonce x509 revocation constraints pubkey pkcs1 pkcs7 pkcs8 pkcs12 pgp dnskey sshkey pem openssl fips-prf xcbc cmac hmac attr kernel-pfkey kernel-pfroute resolve socket-default stroke vici updown eap-identity eap-md5 eap-mschapv2 eap-tls eap-ttls eap-peap xauth-generic whitelist addrblock
+Listening IP addresses:
+  10.1.0.1
+  fc00::10
+  192.168.0.1
+  fc00:1::10
+Connections:
+     net-net:  192.168.0.1...192.168.0.2  IKEv2
+     net-net:   local:  [moon.strongswan.org] uses public key authentication
+     net-net:    cert:  "C=CH, O=Linux strongSwan, CN=moon.strongswan.org"
+     net-net:   remote: [sun.strongswan.org] uses public key authentication
+     net-net:   child:  10.1.0.0/16 === 10.2.0.0/16 TUNNEL
+Security Associations (1 up, 0 connecting):
+     net-net[1]: ESTABLISHED 30 seconds ago, 192.168.0.1[moon.strongswan.org]...192.168.0.2[sun.strongswan.org]
+     net-net[1]: IKEv2 SPIs: 9eea7b1932b9adb4_i* 54fd5e2dd83f71cc_r, public key reauthentication in 52 minutes
+     net-net[1]: IKE proposal: AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_3072
+     net-net{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: cec54b0f_i c2846b3b_o
+     net-net{1}:  AES_CBC_128/HMAC_SHA2_256_128, 84 bytes_i (1 pkt, 18s ago), 156 bytes_o (1 pkt, 18s ago), rekeying in 15 minutes
+     net-net{1}:   10.1.0.0/16 === 10.2.0.0/16

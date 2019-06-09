@@ -1,0 +1,95 @@
+TCPDUMP
+
+sun# tcpdump -i eth0 -w /tmp/tcpdump.log &
+
+PRE-TEST
+
+Starting strongSwan 5.5.1 IPsec [starter]...
+no netkey IPsec stack detected
+no KLIPS IPsec stack detected
+no known IPsec stack detected, ignoring!
+Starting strongSwan 5.5.1 IPsec [starter]...
+no netkey IPsec stack detected
+no KLIPS IPsec stack detected
+no known IPsec stack detected, ignoring!
+50
+50
+initiating IKE_SA net-net[1] to 192.168.0.2
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.168.0.1[500] to 192.168.0.2[500] (1156 bytes)
+received packet: from 192.168.0.2[500] to 192.168.0.1[500] (617 bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) CERTREQ N(FRAG_SUP) N(HASH_ALG) N(MULT_AUTH) ]
+received cert request for "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+sending cert request for "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+authentication of 'moon.strongswan.org' (myself) with RSA_EMSA_PKCS1_SHA2_384 successful
+sending end entity cert "C=CH, O=Linux strongSwan, CN=moon.strongswan.org"
+establishing CHILD_SA net-net
+generating IKE_AUTH request 1 [ IDi CERT N(INIT_CONTACT) CERTREQ IDr AUTH N(ESP_TFC_PAD_N) SA TSi TSr N(MULT_AUTH) N(EAP_ONLY) ]
+splitting IKE message with length of 1744 bytes into 2 fragments
+generating IKE_AUTH request 1 [ EF(1/2) ]
+generating IKE_AUTH request 1 [ EF(2/2) ]
+sending packet: from 192.168.0.1[500] to 192.168.0.2[500] (1252 bytes)
+sending packet: from 192.168.0.1[500] to 192.168.0.2[500] (564 bytes)
+received packet: from 192.168.0.2[500] to 192.168.0.1[500] (372 bytes)
+parsed IKE_AUTH response 1 [ EF(2/2) ]
+received fragment #2 of 2, waiting for complete IKE message
+received packet: from 192.168.0.2[500] to 192.168.0.1[500] (1252 bytes)
+parsed IKE_AUTH response 1 [ EF(1/2) ]
+received fragment #1 of 2, reassembling fragmented IKE message
+parsed IKE_AUTH response 1 [ IDr CERT AUTH N(ESP_TFC_PAD_N) SA TSi TSr N(AUTH_LFT) ]
+received end entity cert "C=CH, O=Linux strongSwan, CN=sun.strongswan.org"
+  using certificate "C=CH, O=Linux strongSwan, CN=sun.strongswan.org"
+  using trusted ca certificate "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+checking certificate status of "C=CH, O=Linux strongSwan, CN=sun.strongswan.org"
+  fetching crl from 'http://crl.strongswan.org/strongswan.crl' ...
+unable to fetch from http://crl.strongswan.org/strongswan.crl, no capable fetcher found
+crl fetching failed
+certificate status is not available
+  reached self-signed root ca with a path length of 0
+authentication of 'sun.strongswan.org' with RSA_EMSA_PKCS1_SHA2_512 successful
+IKE_SA net-net[1] established between 192.168.0.1[moon.strongswan.org]...192.168.0.2[sun.strongswan.org]
+scheduling reauthentication in 3326s
+maximum IKE_SA lifetime 3506s
+received ESP_TFC_PADDING_NOT_SUPPORTED, not using ESPv3 TFC padding
+connection 'net-net' established successfully
+
+TEST
+
+moon# cat /var/log/daemon.log | grep 'authentication of.*sun.strongswan.org.*with RSA_EMSA_PKCS1_SHA2_512 successful' [YES]
+Jun  9 15:05:29 04[IKE] authentication of 'sun.strongswan.org' with RSA_EMSA_PKCS1_SHA2_512 successful
+
+moon# ipsec status 2> /dev/null | grep 'net-net.*ESTABLISHED.*moon.strongswan.org.*sun.strongswan.org' [YES]
+     net-net[1]: ESTABLISHED 10 seconds ago, 192.168.0.1[moon.strongswan.org]...192.168.0.2[sun.strongswan.org]
+
+sun# cat /var/log/daemon.log | grep 'authentication of.*moon.strongswan.org.*with RSA_EMSA_PKCS1_SHA2_384 successful' [YES]
+Jun  9 15:05:29 08[IKE] authentication of 'moon.strongswan.org' with RSA_EMSA_PKCS1_SHA2_384 successful
+
+sun# ipsec status 2> /dev/null | grep 'net-net.*ESTABLISHED.*sun.strongswan.org.*moon.strongswan.org' [YES]
+     net-net[1]: ESTABLISHED 11 seconds ago, 192.168.0.2[sun.strongswan.org]...192.168.0.1[moon.strongswan.org]
+
+moon# ipsec status 2> /dev/null | grep 'net-net.*INSTALLED, TUNNEL' [YES]
+     net-net{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: cec54b0f_i c2846b3b_o
+
+sun# ipsec status 2> /dev/null | grep 'net-net.*INSTALLED, TUNNEL' [YES]
+     net-net{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: c2846b3b_i cec54b0f_o
+
+alice# ping -c 1 10.2.0.10 | grep '64 bytes from 10.2.0.10: icmp_.eq=' [YES]
+64 bytes from 10.2.0.10: icmp_seq=0 ttl=62 time=4.062 ms
+
+sun# killall tcpdump
+
+reading from file /tmp/tcpdump.log, link-type EN10MB (Ethernet)
+sun# tcpdump -r /tmp/tcpdump.log | grep 'IP 192.168.0.1 > 192.168.0.2: ESP' [YES]
+15:05:42.346900 IP 192.168.0.1 > 192.168.0.2: ESP(spi=0xc2846b3b,seq=0x1), length 136
+
+reading from file /tmp/tcpdump.log, link-type EN10MB (Ethernet)
+sun# tcpdump -r /tmp/tcpdump.log | grep 'IP 192.168.0.2 > 192.168.0.1: ESP' [YES]
+15:05:42.349099 IP 192.168.0.2 > 192.168.0.1: ESP(spi=0xcec54b0f,seq=0x1), length 136
+
+
+POST-TEST
+
+Stopping strongSwan IPsec...
+Stopping strongSwan IPsec...
+sun# killall tcpdump
+

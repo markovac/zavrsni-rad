@@ -1,0 +1,78 @@
+TCPDUMP
+
+sun# tcpdump -i eth0 -w /tmp/tcpdump.log &
+
+PRE-TEST
+
+rm: /etc/ipsec.d/cacerts/*: No such file or directory
+rm: /etc/ipsec.d/cacerts/*: No such file or directory
+Starting strongSwan 5.5.1 IPsec [starter]...
+no netkey IPsec stack detected
+no KLIPS IPsec stack detected
+no known IPsec stack detected, ignoring!
+Starting strongSwan 5.5.1 IPsec [starter]...
+no netkey IPsec stack detected
+no KLIPS IPsec stack detected
+no known IPsec stack detected, ignoring!
+50
+50
+initiating IKE_SA net-net[1] to 192.168.0.2
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.168.0.1[500] to 192.168.0.2[500] (1156 bytes)
+received packet: from 192.168.0.2[500] to 192.168.0.1[500] (617 bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) CERTREQ N(FRAG_SUP) N(HASH_ALG) N(MULT_AUTH) ]
+received cert request for "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+sending cert request for "C=CH, O=Linux strongSwan, CN=strongSwan Root CA"
+authentication of 'moon.strongswan.org' (myself) with RSA_EMSA_PKCS1_SHA2_256 successful
+embedding PUBKEY certificate in payload failed
+establishing CHILD_SA net-net
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH N(ESP_TFC_PAD_N) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_6_ADDR) N(ADD_6_ADDR) N(MULT_AUTH) N(EAP_ONLY) ]
+sending packet: from 192.168.0.1[4500] to 192.168.0.2[4500] (752 bytes)
+received packet: from 192.168.0.2[4500] to 192.168.0.1[4500] (560 bytes)
+parsed IKE_AUTH response 1 [ IDr AUTH N(ESP_TFC_PAD_N) SA TSi TSr N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_6_ADDR) N(ADD_6_ADDR) ]
+  using trusted certificate "sun.strongswan.org"
+authentication of 'sun.strongswan.org' with RSA_EMSA_PKCS1_SHA2_256 successful
+IKE_SA net-net[1] established between 192.168.0.1[moon.strongswan.org]...192.168.0.2[sun.strongswan.org]
+scheduling reauthentication in 3419s
+maximum IKE_SA lifetime 3599s
+received ESP_TFC_PADDING_NOT_SUPPORTED, not using ESPv3 TFC padding
+connection 'net-net' established successfully
+
+TEST
+
+moon# ipsec status 2> /dev/null | grep 'net-net.*ESTABLISHED.*moon.strongswan.org.*sun.strongswan.org' [YES]
+     net-net[1]: ESTABLISHED 11 seconds ago, 192.168.0.1[moon.strongswan.org]...192.168.0.2[sun.strongswan.org]
+
+sun# ipsec status 2> /dev/null | grep 'net-net.*ESTABLISHED.*sun.strongswan.org.*moon.strongswan.org' [YES]
+     net-net[1]: ESTABLISHED 11 seconds ago, 192.168.0.2[sun.strongswan.org]...192.168.0.1[moon.strongswan.org]
+
+moon# ipsec status 2> /dev/null | grep 'INSTALLED, TUNNEL' [YES]
+     net-net{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: c0c3e593_i c7a28e0b_o
+
+sun# ipsec status 2> /dev/null | grep 'INSTALLED, TUNNEL' [YES]
+     net-net{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: c7a28e0b_i c0c3e593_o
+
+alice# ping -c 1 10.2.0.10 | grep '64 bytes from 10.2.0.10: icmp_.eq=' [YES]
+64 bytes from 10.2.0.10: icmp_seq=0 ttl=62 time=6.370 ms
+
+sun# killall tcpdump
+
+reading from file /tmp/tcpdump.log, link-type EN10MB (Ethernet)
+sun# tcpdump -r /tmp/tcpdump.log | grep 'IP 192.168.0.1 > 192.168.0.2: ESP' [YES]
+15:01:37.136019 IP 192.168.0.1 > 192.168.0.2: ESP(spi=0xc7a28e0b,seq=0x1), length 136
+
+reading from file /tmp/tcpdump.log, link-type EN10MB (Ethernet)
+sun# tcpdump -r /tmp/tcpdump.log | grep 'IP 192.168.0.2 > 192.168.0.1: ESP' [YES]
+15:01:37.137307 IP 192.168.0.2 > 192.168.0.1: ESP(spi=0xc0c3e593,seq=0x1), length 136
+
+
+POST-TEST
+
+Stopping strongSwan IPsec...
+Stopping strongSwan IPsec...
+rm: /etc/ipsec.d/private/moonKey.der: No such file or directory
+rm: /etc/ipsec.d/private/sunKey.der: No such file or directory
+rm: /etc/ipsec.d/certs/*.der: No such file or directory
+rm: /etc/ipsec.d/certs/*.der: No such file or directory
+sun# killall tcpdump
+
