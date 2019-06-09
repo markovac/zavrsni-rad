@@ -126,9 +126,6 @@ do
     ;;
     esac
     
-    #Dodaj tcpdump.log na svaki cvor
-    #himage $host touch /tmp/tcpdump.log
-    #himage $host touch /tmp/tcpdump.err.log
 done
 
 source $DEFAULTTESTSDIR/$testname/test.conf
@@ -151,8 +148,7 @@ do
 	# copy specific host information (private keys, public keys, ...) to IMUNES hosts
 	hcp -r $CERTDIR/${host}/etc/. ${host}:/usr/local/etc/
 
-
-	hcp $TESTDIR/hosts/${host}/etc/* ${host}:/usr/local/etc/
+	hcp -r $TESTDIR/hosts/${host}/etc/* ${host}:/usr/local/etc/
 done
 
 ##########################################################################
