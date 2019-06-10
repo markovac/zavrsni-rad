@@ -19,7 +19,11 @@ DIR=$(dirname `readlink -f $0`)
 . $DIR/testing.conf
 . $DIR/function.sh
 
-[ `jls | wc -l` -eq 1 ] && (echo "Please start test environment before running $0" ; exit 1)
+if [ `jls | wc -l` -eq 1 ] 
+then
+	echo "Please start test environment before running $0"
+	exit 1
+fi
 #[ -d $DIR/hosts ] || echo "Directory 'hosts' not found" && exit 1
 [ -d $DIR/temp ] || (echo "Directory 'tests' not found" ; exit 1)
 [ -d $BUILDDIR ] || (echo "Directory '$BUILDDIR' does not exist, please run make-testing first" ; exit 1)
